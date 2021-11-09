@@ -1,6 +1,5 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { ERANGE } = require('constants');
 
 module.exports = {
   mode: 'development',
