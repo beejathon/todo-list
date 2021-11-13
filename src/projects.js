@@ -1,6 +1,6 @@
 import { renderProjects, renderTasks } from './display.js';
-import { pubsub } from './pubsub.js';
 import { allProjects, saveLocal } from './storage.js';
+import { clearTasks } from './tasks.js';
 
 class Project {
   constructor(title) {
@@ -16,8 +16,6 @@ function addProject(title) {
   allProjects.push(newProject);
   saveLocal();
   renderProjects();
-  pubsub.publish('projectAdded', allProjects);
-  console.log(allProjects);
 }
 
 function openActiveProject() {
@@ -27,14 +25,31 @@ function openActiveProject() {
 
 function switchActiveProject(e) {
   e.preventDefault();
-  resetActiveProjects();
-  const index = findProject(e.target.id);
+  resetActiveProject();
+  const index = findProject(this.id);
   allProjects[index].active = true;
   renderProjects();
   renderTasks();
 }
 
-function resetActiveProjects() {
+function removeProject(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  const index = findProject(this.id);
+  if (allProjects[index].active = true) {
+    allProjects.splice(index, 1);
+    resetActiveProject();
+    renderProjects();
+    clearTasks();
+  } else {
+    allProjects.splice(index, 1);
+    renderProjects();
+    renderTasks();
+  }
+  saveLocal();
+}
+
+function resetActiveProject() {
   allProjects.forEach(project => project.active = false);
 }
 
@@ -44,4 +59,4 @@ function findProject(title) {
   }
 }
 
-export { addProject, openActiveProject, switchActiveProject };
+export { addProject, openActiveProject, switchActiveProject, removeProject };

@@ -1,17 +1,24 @@
-import { pubsub } from './pubsub.js';
 import { allProjects } from './storage.js';
-import { addProject, openActiveProject, switchActiveProject } from './projects.js';
+import { addProject, openActiveProject, removeProject, switchActiveProject } from './projects.js';
 import { addTask } from './tasks.js';
 
 function renderProjects() {
   const projectList = document.getElementById('projectList');
   projectList.innerHTML = '';
   allProjects.forEach(project => {
-    let div = document.createElement('div')
-    div.textContent = project.title;
-    div.setAttribute('id', project.title);
-    projectList.appendChild(div);
-    div.addEventListener('click', switchActiveProject);
+    const projectNode = document.createElement('div');
+    projectNode.setAttribute('id', project.title);
+    const projectTitle = document.createElement('div');
+    projectTitle.textContent = project.title;
+    const delBtn = document.createElement('button');
+    delBtn.setAttribute('id', project.title);
+    delBtn.classList.add('delProject')
+    delBtn.innerHTML = '&times;';
+    projectNode.appendChild(projectTitle);
+    projectNode.appendChild(delBtn);
+    projectList.appendChild(projectNode);
+    projectNode.addEventListener('click', switchActiveProject);
+    delBtn.addEventListener('click', removeProject);
   })
 }
 

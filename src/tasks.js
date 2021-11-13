@@ -1,5 +1,4 @@
 import { renderTasks } from './display.js';
-import { pubsub } from './pubsub.js';
 import { openActiveProject } from './projects.js';
 import { saveLocal } from './storage.js';
 
@@ -16,7 +15,11 @@ function addTask(title, due) {
   activeProject.tasks.push(newTask);
   saveLocal();
   renderTasks();
-  pubsub.publish('taskAdded', activeProject.tasks);
 }
 
-export { addTask };
+function clearTasks() {
+  const taskList = document.getElementById('taskList');
+  taskList.innerHTML = '';
+}
+
+export { addTask, clearTasks };
