@@ -1,10 +1,12 @@
 import './style.css';
-import loadList from './lists.js';
-import render from './display.js';
+import { load } from './storage.js';
+import { renderProjects, renderTasks, loadHandlers } from './display.js';
 
 function init() {
-    loadList();
-    render();
+  load();
+  renderProjects();
+  renderTasks();
+  loadHandlers();
 }
 
-init;
+init();

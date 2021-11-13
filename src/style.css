@@ -22,12 +22,12 @@ body {
     justify-content:space-between;
 }
 
-.menu {
+.projects-container {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: left;
-    width: 15vw;
+    width: 20vw;
     height: 100vw;
     padding: 10px;
     color: white;
@@ -37,9 +37,11 @@ body {
     background-color: rgba(0, 0, 0, 0.4)
 }
 
-.content {
-    display: grid;
-    grid-template-columns: auto;
+.tasks-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: left;
     width: 75vw;
     margin-right: 0;
     margin-bottom: 0;

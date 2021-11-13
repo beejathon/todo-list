@@ -11,8 +11,22 @@
         <p>A Simple Todo List</p>
     </div>
     <div class="container" id="main">
-        <div class="menu" id="menu">Projects go here</div>
-        <div class="content" id="content">view goes here</div>
+        <div class="projects-container" id="projectsContainer">
+            <div class="project-list" id="projectList"></div>
+            <form class="project-form" id="projectForm">
+                <input type="text" id="projectTitle" name="title" placeholder="Project Title" autocomplete="off" required>
+                <button id="addProject" type="submit">Add Project</button>
+            </form>
+        </div>
+
+        <div class="tasks-container" id="tasksContainer">
+            <div class="task-list" id="taskList"></div>
+            <form class="project-form" id="taskForm">
+                <input type="text" id="taskTitle" name="title" placeholder="Task Title" autocomplete="off" required>
+                <input type="text" id="taskDue" name="due" placeholder="Dude Date" autocomplete="off" required>
+                <button id="addTask" type="submit">Add Task</button>
+            </form>
+        </div>
     </div>
     <div class="footer"></div>
 </body>

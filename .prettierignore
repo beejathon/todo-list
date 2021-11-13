@@ -1,0 +1,5 @@
+# Ignore artifacts:
+
+package-lock.json
+package.json
+webpack.config.js

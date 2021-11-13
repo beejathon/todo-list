@@ -1,75 +1,28 @@
-import { pubsub } from './pubsub.js';
+import { renderProjects, renderTasks } from "./display";
+import { addProject } from "./projects";
+import { addTask } from "./tasks";
 
-class Task {
-    constructor(title, description, duedate, priority) {
-        this.title = title;
-        this.description = description;
-        this.duedate = duedate;
-        this.priority = priority;
-    }
-    edit(field, value) {
-        if (this[field] == undefined) return;
-        this[field] = value;
-    }
-}
+let allProjects = [];
 
-class Project {
-    constructor(title) {
-        this.title = title;
-        this.tasks = []
-    }
-    newTask(title, description, duedate, priority) {
-        const task = new Task(title, description, duedate, priority);
-        this.tasks.push(task);
-    }   
-}
-
-const projects = [];
-
-function loadList() {
-    if (!localStorage.getItem('sampleProject')) {
-        projects.push(
-            new Project('My First Project')
-        );
-        saveLocal();
-    }
+function load() {
+  if (!localStorage.getItem('saved')) {
+    addProject('template project');
+    addTask('make a todo list', 'now');
+    addTask('finish tasks', 'later');
+    renderTasks();
+  } else {
     restoreLocal();
+  }
 }
 
 function saveLocal() {
-    localStorage.setItem('projects', JSON.stringify(projects))
+  localStorage.setItem('projects', JSON.stringify(allProjects));
 }
 
 function restoreLocal() {
-    if(!localStorage.getItem('sampleProject')) {
-        localStorage.setItem('sampleProject', true);
-    } else {
-        objects = JSON.parse(localStorage.getItem('projects'));    
-        for(let element of objects) {
-            if(element !== null) {
-                projects.push(new Project(element.title, element.tasks))
-            }
-        }
-        saveLocal();
-    }
+  allProjects = JSON.parse(localStorage.getItem('projects'));
+  renderProjects();
+  renderTasks();
 }
 
-function findProject(title) {
-    return projects.indexOf(projects.filter((project) => project.title === title))
-}
-
-function addProject() {
-    const newProject = new Project(title);
-    projects.push(newProject);
-    pubsub.publish('projectAdded', storage.projects);
-}
-
-function removeProject() {
-    e.preventDefault();
-    const index = findProject(e.target.id);
-    projects.splice(index, 1);
-    saveLocal();
-    pubsub.publish('projectRemoved', storage.projects);
-}
-
-export { loadList, addProject, removeProject };
+export { allProjects, load, saveLocal, restoreLocal };

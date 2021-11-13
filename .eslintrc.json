@@ -1,0 +1,23 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
+    "extends": [
+        "airbnb-base",
+        "prettier"
+    ],
+    "parserOptions": {
+        "ecmaVersion": 13,
+        "sourceType": "module"
+    },
+    "rules": {
+        "no-console": "off",
+        "import/extensions": ["always"],
+        "no-use-before-define": ["error", { "functions": false, "classes": false }],
+        "max-classes-per-file": [
+            "error",
+            { "ignoreExpressions": true, "max": 2 }
+        ]
+    }
+}
