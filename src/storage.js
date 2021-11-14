@@ -9,7 +9,6 @@ function load() {
     addProject('template project');
     addTask('make a todo list', 'now');
     addTask('finish tasks', 'later');
-    renderTasks();
     saveLocal();
   }
   restoreLocal();

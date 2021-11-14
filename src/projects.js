@@ -11,11 +11,13 @@ class Project {
 }
 
 function addProject(title) {
+  resetActiveProject();
   const newProject = new Project(title);
   newProject.active = true;
   allProjects.push(newProject);
   saveLocal();
   renderProjects();
+  renderTasks();
 }
 
 function openActiveProject() {
@@ -24,10 +26,12 @@ function openActiveProject() {
 }
 
 function switchActiveProject(e) {
+  e.stopPropagation();
   e.preventDefault();
   resetActiveProject();
   const index = findProject(this.id);
   allProjects[index].active = true;
+  saveLocal();
   renderProjects();
   renderTasks();
 }
@@ -36,7 +40,7 @@ function removeProject(e) {
   e.stopPropagation();
   e.preventDefault();
   const index = findProject(this.id);
-  if (allProjects[index].active = true) {
+  if (allProjects[index].active) {
     allProjects.splice(index, 1);
     resetActiveProject();
     renderProjects();
