@@ -1,12 +1,13 @@
 import { allProjects } from './storage.js';
 import { addProject, openActiveProject, removeProject, switchActiveProject } from './projects.js';
-import { addTask } from './tasks.js';
+import { addTask, removeTask } from './tasks.js';
 
 function renderProjects() {
   const projectList = document.getElementById('projectList');
   projectList.innerHTML = '';
   allProjects.forEach(project => {
     const projectNode = document.createElement('div');
+    projectNode.classList.add('project-node');
     projectNode.setAttribute('id', project.title);
     const projectTitle = document.createElement('div');
     projectTitle.textContent = project.title;
@@ -31,10 +32,23 @@ function renderTasks() {
   title.textContent = activeProject.title;
   taskList.appendChild(title);
   tasks.forEach(task => {
-    let div = document.createElement('div');
-    div.textContent = task.title;
-    div.setAttribute('id', task.title);
-    taskList.appendChild(div);
+    const taskNode = document.createElement('div');
+    taskNode.classList.add('task-node');
+    taskNode.setAttribute('id', task.title);
+    const taskTitle = document.createElement('div');
+    taskTitle.textContent = task.title;
+    const dueDate = document.createElement('div');
+    dueDate.classList.add('due-date');
+    dueDate.textContent = task.due;
+    const delBtn = document.createElement('button');
+    delBtn.setAttribute('id', task.title);
+    delBtn.classList.add('delTask');
+    delBtn.innerHTML = '&times;';
+    taskNode.appendChild(taskTitle);
+    taskNode.appendChild(dueDate);
+    taskNode.appendChild(delBtn);
+    taskList.appendChild(taskNode);
+    delBtn.addEventListener('click', removeTask)
   });
 }
 
