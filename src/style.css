@@ -34,7 +34,8 @@ body {
     margin-left: 0;
     margin-bottom: 0;
     font-size: 1.5rem;
-    background-color: rgba(0, 0, 0, 0.4)
+    background-color: rgba(0, 0, 0, 0.4);
+    row-gap: 1rem;
 }
 
 .tasks-container {
@@ -45,6 +46,13 @@ body {
     width: 75vw;
     margin-right: 0;
     margin-bottom: 0;
+    row-gap: 1rem;
+}
+
+.project-list {
+    display: flex;
+    flex-direction: column;
+    row-gap: 1rem;
 }
 
 .project-node {
@@ -53,9 +61,32 @@ body {
     justify-content: space-between;
 }
 
+.task-list {
+    display: flex;
+    flex-direction: column;
+    row-gap: 1rem;
+}
+
 .task-node {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 90%;
+}
+
+.task-wrapper {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    width: 90%;
+}
+
+.hidden {
+    display: none;
+}
+
+.task-end {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    column-gap: 2rem;
 }

@@ -1,6 +1,5 @@
 import { renderProjects, renderTasks } from './display.js';
 import { allProjects, saveLocal } from './storage.js';
-import { clearTasks } from './tasks.js';
 
 class Project {
   constructor(title) {
@@ -40,11 +39,16 @@ function removeProject(e) {
   e.stopPropagation();
   e.preventDefault();
   const index = findProject(this.id);
-  if (allProjects[index].active) {
+  if (allProjects.length === 1 && allProjects[index].active) {
+    allProjects.splice(0, allProjects.length);
+    renderProjects();
+    renderTasks();
+  } else if (allProjects[index].active) {
     allProjects.splice(index, 1);
     resetActiveProject();
     renderProjects();
-    clearTasks();
+    setDefaultActiveProject();
+    renderTasks();
   } else {
     allProjects.splice(index, 1);
     renderProjects();
@@ -55,6 +59,10 @@ function removeProject(e) {
 
 function resetActiveProject() {
   allProjects.forEach(project => project.active = false);
+}
+
+function setDefaultActiveProject() {
+  allProjects[0].active = true;
 }
 
 function findProject(title) {

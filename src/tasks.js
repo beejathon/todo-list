@@ -33,8 +33,15 @@ function removeTask(e) {
 function editTask(e) {
   e.stopPropagation();
   e.preventDefault();
-  console.log(this.id)
+  const index = findTask(this.id);
+  const activeProject = openActiveProject();
+  const dataForm = new FormData(e.target);
+  if (dataForm.get('title')) activeProject.tasks[index].edit(title, dataForm.get('title'));
+  if (dataForm.get('due')) activeProject.tasks[index].edit(due, dataForm.get('due'));
+  saveLocal();
+  renderTasks();
 }
+
 
 function findTask(title) {
   const activeProject = openActiveProject();
@@ -43,11 +50,4 @@ function findTask(title) {
   }
 }
 
-function clearTasks() {
-  const taskList = document.getElementById('taskList');
-  taskList.innerHTML = `
-  <h1>DO SOMETHING WILL YA... EXCEPT ADD A TASK. DON'T DO THAT</h1>
-  `;
-}
-
-export { addTask, removeTask, editTask, findTask, clearTasks };
+export { addTask, removeTask, editTask, findTask };

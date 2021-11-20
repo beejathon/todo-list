@@ -1,18 +1,6 @@
-import { renderProjects, renderTasks } from "./display";
-import { addProject } from "./projects";
-import { addTask } from "./tasks";
+import { renderProjects, renderTasks } from './display';
 
 let allProjects = [];
-
-function load() {
-  if (!localStorage.getItem('template')) {
-    addProject('template project');
-    addTask('make a todo list', 'now');
-    addTask('finish tasks', 'later');
-    saveLocal();
-  }
-  restoreLocal();
-}
 
 function saveLocal() {
   localStorage.setItem('projects', JSON.stringify(allProjects));
@@ -28,4 +16,4 @@ function restoreLocal() {
   }
 }
 
-export { allProjects, load, saveLocal, restoreLocal };
+export { allProjects, saveLocal, restoreLocal };

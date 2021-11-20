@@ -1,6 +1,7 @@
 import { allProjects } from './storage.js';
 import { addProject, openActiveProject, removeProject, switchActiveProject } from './projects.js';
 import { addTask, removeTask, editTask } from './tasks.js';
+import { format, parseISO } from 'date-fns';
 
 function createProjectNode(title) {
   const projectNode = document.createElement('div');
@@ -24,18 +25,77 @@ function renderProjects() {
     const projectNode = createProjectNode(project.title);
     projectList.appendChild(projectNode);
   })
-  loadHandlers();
+}
+
+function createAddTaskForm() {
+  const form = document.createElement('form');
+  form.setAttribute('id', 'taskForm');
+  form.classList.add('task-form')
+  const title = document.createElement('input');
+  title.setAttribute('type', 'text');
+  title.setAttribute('id', 'taskTitle');
+  title.setAttribute('name', 'title');
+  title.setAttribute('placeholder', 'Enter task description');
+  title.setAttribute('autocomplete', 'off');
+  title.setAttribute('required', 'true');
+  const date = document.createElement('input');
+  date.setAttribute('type', 'date');
+  date.setAttribute('id', 'taskDue');
+  date.setAttribute('name', 'due');
+  date.setAttribute('placeholder', 'Due Date');
+  date.setAttribute('autcomplete', 'off');
+  date.setAttribute('required', 'true');
+  const addTaskBtn = document.createElement('button');
+  addTaskBtn.setAttribute('id', 'addTask');
+  addTaskBtn.setAttribute('type', 'submit');
+  addTaskBtn.innerHTML = 'Add Task';
+  form.appendChild(title);
+  form.appendChild(date);
+  form.appendChild(addTaskBtn);
+  return form;
+}
+
+function createTaskEditForm(title, due) {
+  const formWrapper = document.createElement('div');
+  formWrapper.classList.add('hidden');
+  formWrapper.setAttribute('id', `edit-${title}`);
+  const form = document.createElement('form');
+  form.classList.add('task-edit-form');
+  form.setAttribute('id', title)
+  const taskTitle = document.createElement('input');
+  taskTitle.classList.add('task-edit-title');
+  taskTitle.setAttribute('type', 'text');
+  taskTitle.setAttribute('name', 'title');
+  taskTitle.setAttribute('placeholder', title);
+  taskTitle.setAttribute('autocomplete', 'off');
+  const dueDate = document.createElement('input');
+  dueDate.classList.add('task-edit-duedate');
+  dueDate.setAttribute('type', 'date');
+  dueDate.setAttribute('name', 'date');
+  dueDate.setAttribute('placeholder', parseISO(due));
+  dueDate.setAttribute('autocomplete', 'off');
+  const saveBtn = document.createElement('button');
+  saveBtn.classList.add('save-btn');
+  saveBtn.innerHTML = 'save';
+  form.appendChild(taskTitle);
+  form.appendChild(dueDate);
+  form.appendChild(saveBtn);
+  formWrapper.appendChild(form);
+  return formWrapper;
 }
 
 function createTaskNode(title, due) {
   const taskNode = document.createElement('div');
   taskNode.classList.add('task-node');
   taskNode.setAttribute('id', title);
+  const taskWrapper = document.createElement('div');
+  taskWrapper.classList.add('task-wrapper');
   const taskTitle = document.createElement('div');
+  taskTitle.classList.add('task-title');
   taskTitle.textContent = title;
   const dueDate = document.createElement('div');
   dueDate.classList.add('due-date');
-  dueDate.textContent = due;
+  dueDate.textContent = format(new Date(due), 'dd / MM / yy');
   const editBtn = document.createElement('button');
   editBtn.setAttribute('id', title);
   editBtn.classList.add('edit-task');
@@ -44,15 +104,25 @@ function createTaskNode(title, due) {
   delBtn.setAttribute('id', title);
   delBtn.classList.add('del-task');
   delBtn.innerHTML = '&times;';
-  taskNode.appendChild(taskTitle);
-  taskNode.appendChild(dueDate);
-  taskNode.appendChild(editBtn);
-  taskNode.appendChild(delBtn);
+  const taskEnd = document.createElement('div');
+  taskEnd.classList.add('task-end')
+  taskEnd.appendChild(dueDate);
+  taskEnd.appendChild(editBtn);
+  taskEnd.appendChild(delBtn);
+  taskWrapper.appendChild(taskTitle);
+  taskWrapper.appendChild(taskEnd);
+  const taskEditForm = createTaskEditForm(title, due);
+  taskNode.appendChild(taskWrapper);
+  taskNode.appendChild(taskEditForm);
   return taskNode;
 }
 
 function renderTasks() {
   const taskList = document.getElementById('taskList');
+  if (!openActiveProject()) {
+    taskList.innerHTML = '';
+    return;
+  }
   taskList.innerHTML = '';
   const activeProject = openActiveProject();
   const tasks = activeProject.tasks;
@@ -63,6 +133,8 @@ function renderTasks() {
     const taskNode = createTaskNode(task.title, task.due)
     taskList.appendChild(taskNode);
   });
+  const addTaskForm = createAddTaskForm();
+  taskList.appendChild(addTaskForm);
   loadHandlers();
 }
 
@@ -71,16 +143,17 @@ function loadHandlers() {
   projectForm.addEventListener('submit', projectFormHandler);
   const taskForm = document.getElementById('taskForm');
   taskForm.addEventListener('submit', taskFormHandler);
+  const taskEditForm = document.querySelectorAll('task-edit-form');
+  taskEditForm.forEach(element => element.addEventListener('submit', editTask));
   const projectNodes = document.querySelectorAll('.project-node');
   projectNodes.forEach(node => node.addEventListener('click', switchActiveProject));
   const delProjectBtns = document.querySelectorAll('.del-project');
   delProjectBtns.forEach(btn => btn.addEventListener('click', removeProject));
   const editTaskBtns = document.querySelectorAll('.edit-task');
-  editTaskBtns.forEach(btn => btn.addEventListener('click', editTask));
+  editTaskBtns.forEach(btn => btn.addEventListener('click', showEditForm));
   const delTaskBtns = document.querySelectorAll('.del-task');
   delTaskBtns.forEach(btn => btn.addEventListener('click', removeTask));
 }
-
 
 function projectFormHandler(e) {
   e.preventDefault();
@@ -94,7 +167,14 @@ function taskFormHandler(e) {
   e.preventDefault();
   const dataForm = new FormData(e.target);
   addTask(dataForm.get('title'), dataForm.get('due'));
-  document.getElementById('taskForm').reset();
+  document.querySelector('.task-form').reset();
+}
+
+function showEditForm(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  const editForm = document.getElementById(`edit-${this.id}`);
+  editForm.classList.toggle('hidden');
 }
 
 export { renderProjects, renderTasks, loadHandlers };
