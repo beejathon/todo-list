@@ -1,7 +1,7 @@
 import { allProjects } from './storage.js';
 import { addProject, openActiveProject, removeProject, switchActiveProject } from './projects.js';
 import { addTask, removeTask, editTask } from './tasks.js';
-import { format, parseISO } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 
 function createProjectNode(title) {
   const projectNode = document.createElement('div');
@@ -28,10 +28,13 @@ function renderProjects() {
 }
 
 function createAddTaskForm() {
+  const wrapper = document.createElement ('div');
+  wrapper.classList.add('add-task-wrapper');
   const form = document.createElement('form');
   form.setAttribute('id', 'taskForm');
-  form.classList.add('task-form')
+  form.classList.add('task-form');
   const title = document.createElement('input');
+  title.classList.add('add-task-desc');
   title.setAttribute('type', 'text');
   title.setAttribute('id', 'taskTitle');
   title.setAttribute('name', 'title');
@@ -39,6 +42,7 @@ function createAddTaskForm() {
   title.setAttribute('autocomplete', 'off');
   title.setAttribute('required', 'true');
   const date = document.createElement('input');
+  date.classList.add('add-task-date')
   date.setAttribute('type', 'date');
   date.setAttribute('id', 'taskDue');
   date.setAttribute('name', 'due');
@@ -52,7 +56,8 @@ function createAddTaskForm() {
   form.appendChild(title);
   form.appendChild(date);
   form.appendChild(addTaskBtn);
-  return form;
+  wrapper.appendChild(form);
+  return wrapper;
 }
 
 function createTaskEditForm(title, due) {
@@ -66,13 +71,13 @@ function createTaskEditForm(title, due) {
   taskTitle.classList.add('task-edit-title');
   taskTitle.setAttribute('type', 'text');
   taskTitle.setAttribute('name', 'title');
-  taskTitle.setAttribute('placeholder', title);
+  taskTitle.setAttribute('value', title);
   taskTitle.setAttribute('autocomplete', 'off');
   const dueDate = document.createElement('input');
   dueDate.classList.add('task-edit-duedate');
   dueDate.setAttribute('type', 'date');
-  dueDate.setAttribute('name', 'date');
-  dueDate.setAttribute('placeholder', parseISO(due));
+  dueDate.setAttribute('name', 'due');
+  dueDate.setAttribute('value', parseISO(due));
   dueDate.setAttribute('autocomplete', 'off');
   const saveBtn = document.createElement('button');
   saveBtn.classList.add('save-btn');
@@ -143,8 +148,8 @@ function loadHandlers() {
   projectForm.addEventListener('submit', projectFormHandler);
   const taskForm = document.getElementById('taskForm');
   taskForm.addEventListener('submit', taskFormHandler);
-  const taskEditForm = document.querySelectorAll('task-edit-form');
-  taskEditForm.forEach(element => element.addEventListener('submit', editTask));
+  const taskEditForms = document.querySelectorAll('.task-edit-form');
+  taskEditForms.forEach(form => form.addEventListener('submit', editTask));
   const projectNodes = document.querySelectorAll('.project-node');
   projectNodes.forEach(node => node.addEventListener('click', switchActiveProject));
   const delProjectBtns = document.querySelectorAll('.del-project');

@@ -7,9 +7,6 @@ class Task {
     this.title = title;
     this.due = due;
   }
-  edit(field, value) {
-    this[field] = value;
-  }
 }
 
 function addTask(title, due) {
@@ -35,13 +32,14 @@ function editTask(e) {
   e.preventDefault();
   const index = findTask(this.id);
   const activeProject = openActiveProject();
+  console.log(activeProject)
   const dataForm = new FormData(e.target);
-  if (dataForm.get('title')) activeProject.tasks[index].edit(title, dataForm.get('title'));
-  if (dataForm.get('due')) activeProject.tasks[index].edit(due, dataForm.get('due'));
+  console.log(dataForm.get('due'))
+  if (dataForm.get('title')) activeProject.tasks[index].title = dataForm.get('title');
+  if (dataForm.get('due')) activeProject.tasks[index].due = dataForm.get('due');
   saveLocal();
   renderTasks();
 }
-
 
 function findTask(title) {
   const activeProject = openActiveProject();

@@ -59,6 +59,34 @@ body {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    cursor: pointer;
+}
+
+button {
+    cursor: pointer;
+}
+
+#projectTitle {
+    height: 25px;
+    width: 90%;
+}
+
+.task-form {
+    padding-top: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 70vw;
+}
+
+.add-task-desc {
+    height: 25px;
+    width: 45vw;
+}
+
+.add-task-date {
+    height: 25px;
+    width: 10vw;
 }
 
 .task-list {
