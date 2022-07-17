@@ -48,4 +48,9 @@ function findTask(title) {
   }
 }
 
-export { addTask, removeTask, editTask, findTask };
+export { 
+  addTask, 
+  removeTask, 
+  editTask, 
+  findTask 
+};

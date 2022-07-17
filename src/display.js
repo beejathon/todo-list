@@ -1,7 +1,13 @@
 import { allProjects } from './storage.js';
-import { addProject, openActiveProject, removeProject, switchActiveProject } from './projects.js';
+import { 
+  addProject, 
+  openActiveProject, 
+  removeProject, 
+  switchActiveProject 
+} from './projects.js';
 import { addTask, removeTask, editTask } from './tasks.js';
 import { parseISO, format } from 'date-fns';
+import { signIn, signOutUser } from './index.js';
 
 function createProjectNode(title) {
   const projectNode = document.createElement('div');
@@ -12,7 +18,11 @@ function createProjectNode(title) {
   const delBtn = document.createElement('button');
   delBtn.setAttribute('id', title);
   delBtn.classList.add('del-project')
-  delBtn.innerHTML = '&times;';
+  const delIcon = document.createElement('span');
+  delIcon.classList.add('material-icons');
+  delIcon.classList.add('md-28');
+  delIcon.innerHTML = 'delete';
+  delBtn.append(delIcon);
   projectNode.appendChild(projectTitle);
   projectNode.appendChild(delBtn);
   return projectNode;
@@ -52,6 +62,10 @@ function createAddTaskForm() {
   const addTaskBtn = document.createElement('button');
   addTaskBtn.setAttribute('id', 'addTask');
   addTaskBtn.setAttribute('type', 'submit');
+  addTaskBtn.classList.add('mdl-button');
+  addTaskBtn.classList.add('mdl-js-button');
+  addTaskBtn.classList.add('mdl-button--raised');
+  addTaskBtn.classList.add('mdl-button--colored');
   addTaskBtn.innerHTML = 'Add Task';
   form.appendChild(title);
   form.appendChild(date);
@@ -81,6 +95,10 @@ function createTaskEditForm(title, due) {
   dueDate.setAttribute('autocomplete', 'off');
   const saveBtn = document.createElement('button');
   saveBtn.classList.add('save-btn');
+  saveBtn.classList.add('mdl-button');
+  saveBtn.classList.add('mdl-js-button');
+  saveBtn.classList.add('mdl-button--raised');
+  saveBtn.classList.add('mdl-button--colored');
   saveBtn.innerHTML = 'save';
   form.appendChild(taskTitle);
   form.appendChild(dueDate);
@@ -104,11 +122,18 @@ function createTaskNode(title, due) {
   const editBtn = document.createElement('button');
   editBtn.setAttribute('id', title);
   editBtn.classList.add('edit-task');
-  editBtn.innerHTML = 'edit';
+  const editIcon = document.createElement('span');
+  editIcon.classList.add('material-icons');
+  editIcon.innerHTML = 'edit';
+  editBtn.appendChild(editIcon);
   const delBtn = document.createElement('button');
   delBtn.setAttribute('id', title);
   delBtn.classList.add('del-task');
-  delBtn.innerHTML = '&times;';
+  const delIcon = document.createElement('span');
+  delIcon.classList.add('material-icons');
+  delIcon.classList.add('md-18');
+  delIcon.innerHTML = 'delete';
+  delBtn.append(delIcon);
   const taskEnd = document.createElement('div');
   taskEnd.classList.add('task-end')
   taskEnd.appendChild(dueDate);
@@ -158,6 +183,8 @@ function loadHandlers() {
   editTaskBtns.forEach(btn => btn.addEventListener('click', showEditForm));
   const delTaskBtns = document.querySelectorAll('.del-task');
   delTaskBtns.forEach(btn => btn.addEventListener('click', removeTask));
+  signOutButtonElement.addEventListener('click', signOutUser);
+  signInButtonElement.addEventListener('click', signIn);
 }
 
 function projectFormHandler(e) {
@@ -182,4 +209,49 @@ function showEditForm(e) {
   editForm.classList.toggle('hidden');
 }
 
-export { renderProjects, renderTasks, loadHandlers };
+// Shortcuts to DOM Elements.
+const userPicElement = document.getElementById('user-pic');
+const userNameElement = document.getElementById('user-name');
+const signInButtonElement = document.getElementById('sign-in');
+const signOutButtonElement = document.getElementById('sign-out');
+
+// Adds a size to Google Profile pics URLs.
+function addSizeToGoogleProfilePic(url) {
+  if (url.indexOf('googleusercontent.com') !== -1 && url.indexOf('?') === -1) {
+    return url + '?sz=150';
+  }
+  return url;
+}
+
+function displayUser(profilePicUrl, userName) {
+  // Set the user's profile pic and name.
+  userPicElement.style.backgroundImage =
+    'url(' + addSizeToGoogleProfilePic(profilePicUrl) + ')';
+  userNameElement.textContent = userName;
+
+  // Show user's profile and sign-out button.
+  userNameElement.removeAttribute('hidden');
+  userPicElement.removeAttribute('hidden');
+  signOutButtonElement.removeAttribute('hidden');
+
+  // Hide sign-in button.
+  signInButtonElement.setAttribute('hidden', 'true');
+}
+
+function displaySignIn() {
+  // Hide user's profile and sign-out button.
+  userNameElement.setAttribute('hidden', 'true');
+  userPicElement.setAttribute('hidden', 'true');
+  signOutButtonElement.setAttribute('hidden', 'true');
+
+  // Show sign-in button.
+  signInButtonElement.removeAttribute('hidden');
+}
+
+export { 
+  renderProjects, 
+  renderTasks, 
+  loadHandlers, 
+  displayUser, 
+  displaySignIn 
+};
