@@ -1,19 +1,57 @@
-import { renderProjects, renderTasks } from './display';
+import { addProject } from './projects';
+import { addTask } from './tasks';
+import {
+  collection,
+  orderBy,
+  query,
+  where,
+} from 'firebase/firestore';
+import { db } from '.';
 
-let allProjects = [];
 
+// Firestore
+let projectsRef;
+let tasksRef;
+
+async function syncDb(id) {
+  projectsRef = query(
+    collection(db, 'projects'), 
+    where('user', '==', id), 
+    orderBy('created')
+    );
+  tasksRef = query(
+    collection(db, 'tasks'), 
+    where('user', '==', id), 
+    orderBy('created')
+    );
+}
+
+// Local storage
+let projectArray = [];
 function saveLocal() {
-  localStorage.setItem('projects', JSON.stringify(allProjects));
+  localStorage.setItem('projects', JSON.stringify(projectArray));
 }
 
 function restoreLocal() {
   if (!localStorage.getItem('projects')) {
-    localStorage.setItem('projects');
+    addProject('Template project');
+    addTask('Make a todo list', today);
+    addTask('Finish tasks', tomorrow);
   } else {
-    allProjects = JSON.parse(localStorage.getItem('projects'));
-    renderProjects();
-    renderTasks();
+    projectArray = JSON.parse(localStorage.getItem('projects'));
   }
+  saveLocal();
 }
 
-export { allProjects, saveLocal, restoreLocal };
+const today = new Date();
+const tomorrow = new Date(today);
+tomorrow.setDate(tomorrow.getDate() + 1);
+
+export { 
+  projectArray, 
+  saveLocal, 
+  restoreLocal, 
+  syncDb,
+  projectsRef,
+  tasksRef,
+};

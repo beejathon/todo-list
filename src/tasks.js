@@ -1,6 +1,8 @@
-import { renderTasks } from './display.js';
+import { deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { loadHandlers, renderTasks } from './display.js';
+import { auth, db } from './index.js';
 import { openActiveProject } from './projects.js';
-import { saveLocal } from './storage.js';
+import { saveLocal, tasksRef } from './storage.js';
 
 class Task {
   constructor(title, due) {
@@ -9,36 +11,60 @@ class Task {
   }
 }
 
-function addTask(title, due) {
-  const newTask = new Task(title, due);
-  const activeProject = openActiveProject();
-  activeProject.tasks.push(newTask);
-  saveLocal();
-  renderTasks();
+async function addTask(project, title, due) {
+  if (auth.currentUser) {
+    await setDoc(doc(db, 'tasks', title), {
+      project: project,
+      title: title,
+      due: due,
+      user: auth.currentUser.uid,
+      created: serverTimestamp()
+    })
+  } else {
+    const newTask = new Task(title, due);
+    const activeProject = openActiveProject();
+    activeProject.tasks.push(newTask);
+    saveLocal();
+  }
+  await renderTasks();
+  loadHandlers();
 }
 
-function removeTask(e) {
+async function removeTask(e) {
   e.stopPropagation();
   e.preventDefault();
-  const index = findTask(this.id);
-  const activeProject = openActiveProject();
-  activeProject.tasks.splice(index, 1)
-  saveLocal();
-  renderTasks();
+  if (auth.currentUser) {
+    const tasks = await getDocs(tasksRef);
+    tasks.forEach(async (doc) => {
+      if (doc.data().title === this.id) await deleteDoc(doc.ref)
+    })
+    console.log(this.id)
+  } else {
+    const index = findTask(this.id);
+    const activeProject = openActiveProject();
+    activeProject.tasks.splice(index, 1)
+    saveLocal();
+  }
+  await renderTasks();
+  loadHandlers();
 }
 
-function editTask(e) {
-  e.stopPropagation();
-  e.preventDefault();
-  const index = findTask(this.id);
-  const activeProject = openActiveProject();
-  console.log(activeProject)
-  const dataForm = new FormData(e.target);
-  console.log(dataForm.get('due'))
-  if (dataForm.get('title')) activeProject.tasks[index].title = dataForm.get('title');
-  if (dataForm.get('due')) activeProject.tasks[index].due = dataForm.get('due');
-  saveLocal();
-  renderTasks();
+async function editTask(id, title, due) {
+  const data = { title: title, due: due }
+  if (auth.currentUser) {
+    const tasks = await getDocs(tasksRef);
+    tasks.forEach(async (doc) => {
+      if (doc.data().title === id) await updateDoc(doc.ref, data)
+    })
+  } else {
+    const index = findTask(id);
+    const activeProject = openActiveProject();
+    activeProject.tasks[index].title = title;
+    activeProject.tasks[index].due = due;
+    saveLocal();
+  }
+  await renderTasks();
+  loadHandlers();
 }
 
 function findTask(title) {

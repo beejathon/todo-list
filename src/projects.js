@@ -1,5 +1,19 @@
-import { renderProjects, renderTasks } from './display.js';
-import { allProjects, saveLocal } from './storage.js';
+import { 
+  deleteDoc,
+  doc, 
+  getDocs, 
+  serverTimestamp, 
+  setDoc, 
+  updateDoc, 
+} from 'firebase/firestore';
+import { loadHandlers, render, renderTasks } from './display.js';
+import { auth, db } from './index.js';
+import { 
+  projectArray, 
+  projectsRef, 
+  saveLocal,
+  tasksRef, 
+} from './storage.js';
 
 class Project {
   constructor(title) {
@@ -9,66 +23,122 @@ class Project {
   }
 }
 
-function addProject(title) {
-  resetActiveProject();
-  const newProject = new Project(title);
-  newProject.active = true;
-  allProjects.push(newProject);
-  saveLocal();
-  renderProjects();
-  renderTasks();
+async function addProject(title) {
+  await resetActiveProject();
+  if (auth.currentUser) {
+    await setDoc(doc(db, 'projects', title), {
+      title: title,
+      active: true,
+      user: auth.currentUser.uid,
+      created: serverTimestamp()
+    });
+  } else {
+    const newProject = new Project(title);
+    newProject.active = true;
+    projectArray.push(newProject);
+    saveLocal();
+  }
+  await render();
+}
+
+async function getActiveProject() {
+  const projects = await getDocs(projectsRef)
+  let id;
+  projects.forEach((project) => {
+    if (project.data().active === true) id = project.id;
+  })
+  return id;
 }
 
 function openActiveProject() {
-  let activeProject = allProjects.filter(project => project.active);
-  return activeProject[0];
+  const activeProject = projectArray.find((project) => project.active);
+  return activeProject;
 }
 
-function switchActiveProject(e) {
+async function switchActiveProject(e) {
   e.stopPropagation();
   e.preventDefault();
-  resetActiveProject();
-  const index = findProject(this.id);
-  allProjects[index].active = true;
-  saveLocal();
-  renderProjects();
-  renderTasks();
-}
-
-function removeProject(e) {
-  e.stopPropagation();
-  e.preventDefault();
-  const index = findProject(this.id);
-  if (allProjects.length === 1 && allProjects[index].active) {
-    allProjects.splice(0, allProjects.length);
-    renderProjects();
-    renderTasks();
-  } else if (allProjects[index].active) {
-    allProjects.splice(index, 1);
-    resetActiveProject();
-    renderProjects();
-    setDefaultActiveProject();
-    renderTasks();
+  await resetActiveProject();
+  if (auth.currentUser) {
+    const projects = await getDocs(projectsRef)
+    projects.forEach(async (project) => {
+      if (project.id === this.id) {
+        const docRef = doc(db, 'projects', project.id)
+        await updateDoc(docRef, { active: true });
+      }
+    })
   } else {
-    allProjects.splice(index, 1);
-    renderProjects();
-    renderTasks();
+    const index = findProject(this.id);
+    projectArray[index].active = true;
+    saveLocal();
   }
-  saveLocal();
+  await renderTasks();
+  loadHandlers();
 }
 
-function resetActiveProject() {
-  allProjects.forEach(project => project.active = false);
+async function removeProject(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  if (auth.currentUser) {
+    const projects = await getDocs(projectsRef)
+    projects.forEach(async (doc) => {
+      if (doc.id === this.id) await deleteDoc(doc.ref)
+    })
+    const tasks = await getDocs(tasksRef)
+    tasks.forEach((doc) => {
+      if (doc.data().project === this.id) 
+      deleteDoc(doc.ref)
+    })
+  } else {
+    const index = findProject(this.id);
+    if (projectArray.length === 1 && projectArray[index].active) {
+      projectArray.splice(0, projectArray.length);
+    } else if (projectArray[index].active) {
+      projectArray.splice(index, 1);
+      resetActiveProject();
+      setDefaultActiveProject();
+    } else {
+      projectArray.splice(index, 1);
+    }
+    saveLocal();
+  }
+  await render();
 }
 
-function setDefaultActiveProject() {
-  allProjects[0].active = true;
+async function resetActiveProject() {
+  if (auth.currentUser) {
+    const data = { active: false }
+    const projects = await getDocs(projectsRef)
+    projects.forEach(async (project) => {
+      const docRef = doc(db, 'projects', project.id)
+      await updateDoc(docRef, data);
+    })
+  } else {
+    projectArray.forEach(project => project.active = false);
+  }
+}
+
+async function setDefaultActiveProject() {
+  if (auth.currentUser) {
+    const projects = await getDocs(projectsRef)
+    const id = projects.docs[0].id
+    const docRef = doc(db, 'projects', id)
+    await updateDoc(docRef, { active: true })
+  } else {
+    projectArray[0].active = true;
+  }
 }
 
 function findProject(title) {
-  for (const project of allProjects) {
-    if (project.title === title) return allProjects.indexOf(project);
+  for (const project of projectArray) {
+    if (project.title === title) return projectArray.indexOf(project);
   }
 }
 
-export { addProject, openActiveProject, switchActiveProject, removeProject };
+export { 
+  addProject, 
+  openActiveProject, 
+  getActiveProject,
+  switchActiveProject, 
+  removeProject 
+};

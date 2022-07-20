@@ -1,19 +1,113 @@
-import { allProjects } from './storage.js';
+import { projectArray, projectsRef, tasksRef } from './storage.js';
 import { 
   addProject, 
+  getActiveProject, 
   openActiveProject, 
   removeProject, 
   switchActiveProject 
 } from './projects.js';
-import { addTask, removeTask, editTask } from './tasks.js';
+import { 
+  addTask, 
+  removeTask, 
+  editTask 
+} from './tasks.js';
 import { parseISO, format } from 'date-fns';
-import { signIn, signOutUser } from './index.js';
+import { auth, signIn, signOutUser } from './index.js';
+import { getDocs } from 'firebase/firestore';
 
+// Re-render display
+async function render() {
+  await renderProjects();
+  await renderTasks();
+  loadHandlers();
+}
+
+async function renderProjects() {
+  const projectList = document.getElementById('projectList');
+  projectList.innerHTML = '';
+  if (auth.currentUser) {
+    const projects = await getDocs(projectsRef)
+    projects.forEach((project) => {
+      const projectNode = createProjectNode(project.data().title);
+      projectList.appendChild(projectNode);
+    })
+  } else {
+    projectArray.forEach((project) => {
+      const projectNode = createProjectNode(project.title);
+      projectList.appendChild(projectNode);
+    })  
+  }
+  console.log('projects loaded')
+}
+
+async function renderTasks() {
+  const taskList = document.getElementById('taskList');
+  taskList.innerHTML = '';
+  const title = document.createElement('h2');
+
+  if (auth.currentUser) {
+    const activeProject = await getActiveProject();
+    if (!activeProject) return;
+    title.textContent = activeProject;
+    taskList.appendChild(title);
+    
+    const tasks = await getDocs(tasksRef)
+    tasks.forEach((task) => {
+      if (task.data().project === activeProject) {
+        let title = task.data().title;
+        let due = task.data().due;
+        const taskNode = createTaskNode(title, due);
+        taskList.appendChild(taskNode); 
+      }
+    })
+    
+    const addTaskForm = createAddTaskForm(activeProject);
+    taskList.appendChild(addTaskForm);
+  } else {
+    const activeProject = openActiveProject();
+    if (!activeProject) return;
+    title.textContent = activeProject.title;
+    taskList.appendChild(title);
+    
+    const tasks = activeProject.tasks;
+    tasks.forEach(task => {
+      const taskNode = createTaskNode(task.title, task.due)
+      taskList.appendChild(taskNode);
+    });
+    
+    const addTaskForm = createAddTaskForm(activeProject.title);
+    taskList.appendChild(addTaskForm);
+  }
+  console.log('tasks loaded')
+}
+
+function loadHandlers() {
+  const projectForm = document.getElementById('projectForm');
+  projectForm.addEventListener('submit', projectFormHandler);
+  const taskForm = document.querySelector('.task-form');
+  if (taskForm) taskForm.addEventListener('submit', taskFormHandler);
+  const editTaskForms = document.querySelectorAll('.edit-task-form');
+  editTaskForms.forEach(form => form.addEventListener('submit', editTaskHandler));
+  const projectNodes = document.querySelectorAll('.project-node');
+  projectNodes.forEach(node => node.addEventListener('click', switchActiveProject));
+  const delProjectBtns = document.querySelectorAll('.del-project');
+  delProjectBtns.forEach(btn => btn.addEventListener('click', removeProject));
+  const editTaskBtns = document.querySelectorAll('.edit-task');
+  editTaskBtns.forEach(btn => btn.addEventListener('click', showEditForm));
+  const delTaskBtns = document.querySelectorAll('.del-task');
+  delTaskBtns.forEach(btn => btn.addEventListener('click', removeTask));
+  signOutButtonElement.addEventListener('click', signOutUser);
+  signInButtonElement.addEventListener('click', signIn);
+  console.log('handle deez nutz')
+}
+
+// DOM element factories
 function createProjectNode(title) {
   const projectNode = document.createElement('div');
   projectNode.classList.add('project-node');
   projectNode.setAttribute('id', title);
   const projectTitle = document.createElement('div');
+  projectTitle.classList.add('text-desc');
   projectTitle.textContent = title;
   const delBtn = document.createElement('button');
   delBtn.setAttribute('id', title);
@@ -28,20 +122,11 @@ function createProjectNode(title) {
   return projectNode;
 }
 
-function renderProjects() {
-  const projectList = document.getElementById('projectList');
-  projectList.innerHTML = '';
-  allProjects.forEach(project => {
-    const projectNode = createProjectNode(project.title);
-    projectList.appendChild(projectNode);
-  })
-}
-
-function createAddTaskForm() {
-  const wrapper = document.createElement ('div');
-  wrapper.classList.add('add-task-wrapper');
+function createAddTaskForm(project) {
+  const formWrapper = document.createElement ('div');
+  formWrapper.classList.add('add-task-wrapper');
   const form = document.createElement('form');
-  form.setAttribute('id', 'taskForm');
+  form.setAttribute('id', project);
   form.classList.add('task-form');
   const title = document.createElement('input');
   title.classList.add('add-task-desc');
@@ -70,25 +155,25 @@ function createAddTaskForm() {
   form.appendChild(title);
   form.appendChild(date);
   form.appendChild(addTaskBtn);
-  wrapper.appendChild(form);
-  return wrapper;
+  formWrapper.appendChild(form);
+  return formWrapper;
 }
 
-function createTaskEditForm(title, due) {
+function createEditTaskForm(title, due) {
   const formWrapper = document.createElement('div');
   formWrapper.classList.add('hidden');
   formWrapper.setAttribute('id', `edit-${title}`);
   const form = document.createElement('form');
-  form.classList.add('task-edit-form');
+  form.classList.add('edit-task-form');
   form.setAttribute('id', title)
   const taskTitle = document.createElement('input');
-  taskTitle.classList.add('task-edit-title');
+  taskTitle.classList.add('edit-task-title');
   taskTitle.setAttribute('type', 'text');
   taskTitle.setAttribute('name', 'title');
   taskTitle.setAttribute('value', title);
   taskTitle.setAttribute('autocomplete', 'off');
   const dueDate = document.createElement('input');
-  dueDate.classList.add('task-edit-duedate');
+  dueDate.classList.add('edit-task-duedate');
   dueDate.setAttribute('type', 'date');
   dueDate.setAttribute('name', 'due');
   dueDate.setAttribute('value', parseISO(due));
@@ -115,6 +200,7 @@ function createTaskNode(title, due) {
   taskWrapper.classList.add('task-wrapper');
   const taskTitle = document.createElement('div');
   taskTitle.classList.add('task-title');
+  taskTitle.classList.add('text-desc');
   taskTitle.textContent = title;
   const dueDate = document.createElement('div');
   dueDate.classList.add('due-date');
@@ -141,64 +227,27 @@ function createTaskNode(title, due) {
   taskEnd.appendChild(delBtn);
   taskWrapper.appendChild(taskTitle);
   taskWrapper.appendChild(taskEnd);
-  const taskEditForm = createTaskEditForm(title, due);
+  const editTaskForm = createEditTaskForm(title, due);
   taskNode.appendChild(taskWrapper);
-  taskNode.appendChild(taskEditForm);
+  taskNode.appendChild(editTaskForm);
   return taskNode;
 }
 
-function renderTasks() {
-  const taskList = document.getElementById('taskList');
-  if (!openActiveProject()) {
-    taskList.innerHTML = '';
-    return;
-  }
-  taskList.innerHTML = '';
-  const activeProject = openActiveProject();
-  const tasks = activeProject.tasks;
-  const title = document.createElement('h2');
-  title.textContent = activeProject.title;
-  taskList.appendChild(title);
-  tasks.forEach(task => {
-    const taskNode = createTaskNode(task.title, task.due)
-    taskList.appendChild(taskNode);
-  });
-  const addTaskForm = createAddTaskForm();
-  taskList.appendChild(addTaskForm);
-  loadHandlers();
-}
-
-function loadHandlers() {
-  const projectForm = document.getElementById('projectForm');
-  projectForm.addEventListener('submit', projectFormHandler);
-  const taskForm = document.getElementById('taskForm');
-  taskForm.addEventListener('submit', taskFormHandler);
-  const taskEditForms = document.querySelectorAll('.task-edit-form');
-  taskEditForms.forEach(form => form.addEventListener('submit', editTask));
-  const projectNodes = document.querySelectorAll('.project-node');
-  projectNodes.forEach(node => node.addEventListener('click', switchActiveProject));
-  const delProjectBtns = document.querySelectorAll('.del-project');
-  delProjectBtns.forEach(btn => btn.addEventListener('click', removeProject));
-  const editTaskBtns = document.querySelectorAll('.edit-task');
-  editTaskBtns.forEach(btn => btn.addEventListener('click', showEditForm));
-  const delTaskBtns = document.querySelectorAll('.del-task');
-  delTaskBtns.forEach(btn => btn.addEventListener('click', removeTask));
-  signOutButtonElement.addEventListener('click', signOutUser);
-  signInButtonElement.addEventListener('click', signIn);
-}
-
-function projectFormHandler(e) {
+// Event handlers
+async function projectFormHandler(e) {
+  e.stopPropagation();
   e.preventDefault();
   const dataForm = new FormData(e.target);
-  const title = dataForm.get('title')
-  addProject(title);
+  const title = dataForm.get('title');
+  await addProject(title);
   document.getElementById('projectForm').reset();
 }
 
-function taskFormHandler(e) {
+async function taskFormHandler(e) {
+  e.stopPropagation();
   e.preventDefault();
   const dataForm = new FormData(e.target);
-  addTask(dataForm.get('title'), dataForm.get('due'));
+  await addTask(this.id, dataForm.get('title'), dataForm.get('due'));
   document.querySelector('.task-form').reset();
 }
 
@@ -207,6 +256,15 @@ function showEditForm(e) {
   e.preventDefault();
   const editForm = document.getElementById(`edit-${this.id}`);
   editForm.classList.toggle('hidden');
+}
+
+async function editTaskHandler(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  const dataForm = new FormData(e.target);
+  const title = dataForm.get('title');
+  const due = dataForm.get('due');
+  await editTask(this.id, title, due);
 }
 
 // Shortcuts to DOM Elements.
@@ -222,7 +280,7 @@ function addSizeToGoogleProfilePic(url) {
   }
   return url;
 }
-
+// Sign-in / Sign-out display
 function displayUser(profilePicUrl, userName) {
   // Set the user's profile pic and name.
   userPicElement.style.backgroundImage =
@@ -248,7 +306,8 @@ function displaySignIn() {
   signInButtonElement.removeAttribute('hidden');
 }
 
-export { 
+export {
+  render,
   renderProjects, 
   renderTasks, 
   loadHandlers, 
